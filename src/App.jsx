@@ -39,7 +39,7 @@ export default function App() {
   }, [login])
 
   return (
-    <div className="noise-bg scanline">
+    <div className="min-h-screen">
       {notification && <Notification data={notification} />}
       <Routes>
         <Route path="/" element={<Landing />} />

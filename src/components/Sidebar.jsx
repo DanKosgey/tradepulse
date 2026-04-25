@@ -21,9 +21,12 @@ export default function Sidebar() {
   const handleLogout = () => { logout(); navigate('/') }
 
   return (
-    <aside className="w-64 flex flex-col shrink-0 relative bg-black/60 backdrop-blur-xl"
+    <aside className="w-64 flex flex-col shrink-0 relative"
       style={{
-        borderRight: '1px solid rgba(255,255,255,0.05)',
+        background: 'linear-gradient(180deg, rgba(4,18,10,0.92) 0%, rgba(2,12,7,0.96) 100%)',
+        backdropFilter: 'blur(32px)',
+        borderRight: '1px solid rgba(0,200,128,0.18)',
+        boxShadow: '4px 0 40px rgba(0,200,128,0.06), inset -1px 0 0 rgba(0,200,128,0.08)',
       }}>
 
       {/* ── LOGO ── */}

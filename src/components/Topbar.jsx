@@ -67,8 +67,13 @@ export default function Topbar() {
   }
 
   return (
-    <header className="h-16 flex items-center px-6 gap-4 shrink-0 bg-black/40 backdrop-blur-md"
-      style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+    <header className="h-16 flex items-center px-6 gap-4 shrink-0"
+      style={{
+        background: 'linear-gradient(90deg, rgba(2,14,8,0.85) 0%, rgba(4,20,12,0.80) 100%)',
+        backdropFilter: 'blur(24px)',
+        borderBottom: '1px solid rgba(0,200,128,0.15)',
+        boxShadow: '0 4px 30px rgba(0,200,128,0.06), inset 0 -1px 0 rgba(0,200,128,0.08)',
+      }}>
 
       {/* Live tickers */}
       <div className="flex items-center flex-1 overflow-hidden">
