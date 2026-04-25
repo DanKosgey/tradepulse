@@ -1,0 +1,164 @@
+You are a senior full-stack developer and project auditor.
+Your task is to deeply inspect this workspace and produce a 
+comprehensive progress report for a Deriv API-powered trading 
+application (similar to bsdollars.com — a third-party frontend 
+that connects to Deriv via their WebSocket API to enable 
+automated and manual binary/options trading).
+
+═══════════════════════════════════════════════════════════════
+STEP 1 — WORKSPACE SCAN
+═══════════════════════════════════════════════════════════════
+Start by mapping the full project structure:
+- List all files and folders recursively
+- Identify the tech stack (framework, language, bundler, 
+  package manager, etc.)
+- Read package.json / requirements.txt / go.mod or equivalent
+- Identify entry points (index.html, main.ts, App.jsx, etc.)
+- Note any environment config files (.env, config.js, etc.)
+- Check for any existing documentation (README.md, CHANGELOG)
+
+═══════════════════════════════════════════════════════════════
+STEP 2 — DERIV API INTEGRATION AUDIT
+═══════════════════════════════════════════════════════════════
+Specifically look for and assess:
+
+[ ] WebSocket connection to Deriv API 
+    (wss://ws.binaryws.com/websockets/v3 or 
+     wss://ws.deriv.com/websockets/v3)
+[ ] API app_id registration / usage
+[ ] Authentication flow (OAuth2 or API token)
+[ ] authorize request implementation
+[ ] balance subscription (balance: 1)
+[ ] buy contract implementation
+[ ] proposal request (price quotes before buying)
+[ ] ticks / candles / OHLC subscription
+[ ] transaction history fetching
+[ ] open contracts monitoring
+[ ] WebSocket reconnection / error handling logic
+[ ] proposal_open_contract tracking
+[ ] sell contract before expiry
+[ ] Profit/Loss calculation
+
+═══════════════════════════════════════════════════════════════
+STEP 3 — FEATURE COMPLETENESS CHECK
+═══════════════════════════════════════════════════════════════
+Assess how many of the following core features are built,
+partially built, or missing. Grade each: ✅ Done / 🔶 Partial 
+/ ❌ Missing
+
+AUTHENTICATION & ACCOUNT
+  [ ] Login with Deriv OAuth
+  [ ] API token input / management
+  [ ] Demo vs Real account toggle
+  [ ] Account balance display (live)
+  [ ] Multiple account support
+
+TRADING ENGINE
+  [ ] Contract type selection 
+      (Rise/Fall, Over/Under, Touch/No Touch, etc.)
+  [ ] Market/symbol selector 
+      (Volatility indices, Boom/Crash, Forex, etc.)
+  [ ] Stake/payout input
+  [ ] Duration / expiry selector
+  [ ] Buy button with confirmation
+  [ ] Trade execution feedback (contract ID, buy price)
+  [ ] Open trades panel (live P&L)
+  [ ] Trade history log
+
+BOT / AUTOMATION ENGINE
+  [ ] Strategy builder or script runner
+  [ ] Martingale / D'Alembert / custom staking logic
+  [ ] Win/Loss condition detection
+  [ ] Auto-restart / stop conditions
+  [ ] Max daily loss / profit target limits
+  [ ] Bot start/pause/stop controls
+  [ ] Bot log / activity feed
+
+CHARTING & MARKET DATA
+  [ ] Live tick chart
+  [ ] Candlestick / OHLC chart
+  [ ] Technical indicators (optional)
+  [ ] Market symbol price ticker
+
+UI / UX
+  [ ] Dashboard / home screen
+  [ ] Responsive layout (mobile + desktop)
+  [ ] Dark/light theme
+  [ ] Loading states and error messages
+  [ ] Notifications (win/loss/error toasts)
+
+SETTINGS & CONFIGURATION
+  [ ] API key settings page
+  [ ] Bot configuration persistence
+  [ ] User preferences saved (localStorage or DB)
+
+DEPLOYMENT READINESS
+  [ ] Build configuration (webpack, vite, etc.)
+  [ ] Environment variables properly set up
+  [ ] Hosting/deployment config (Vercel, Netlify, etc.)
+
+═══════════════════════════════════════════════════════════════
+STEP 4 — CODE QUALITY ASSESSMENT
+═══════════════════════════════════════════════════════════════
+- Are components/modules well-separated?
+- Is the WebSocket logic centralized or scattered?
+- Are there race conditions or memory leak risks in 
+  subscriptions?
+- Is error handling present for failed API calls?
+- Is sensitive data (tokens) handled securely?
+- Are there any console.log / debug artifacts left?
+- Is there any test coverage?
+
+═══════════════════════════════════════════════════════════════
+STEP 5 — GENERATE FULL REPORT
+═══════════════════════════════════════════════════════════════
+Return a structured report in this exact format:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 DERIV APP — PROJECT AUDIT REPORT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🗂️  PROJECT OVERVIEW
+  - Stack: [detected stack]
+  - Entry point: [file]
+  - Total files: [count]
+  - Lines of code (estimate): [count]
+
+⚙️  DERIV API INTEGRATION
+  - Connection method: [WebSocket/REST]
+  - App ID found: [yes/no]
+  - Auth implemented: [yes/partial/no]
+  - Implemented endpoints: [list]
+  - Missing endpoints: [list]
+
+📊  FEATURE PROGRESS
+  [Full checklist with ✅ / 🔶 / ❌ for every item above]
+
+  Overall completion: [X]% 
+  (calculated as: done_items / total_items × 100)
+
+🔴  CRITICAL GAPS (Blockers)
+  [List features that must exist before the app is usable]
+
+🟡  NEXT PRIORITIES (What to build next)
+  [Ordered list of what to tackle to reach MVP]
+
+🟢  WHAT'S WORKING WELL
+  [Strengths in the current code]
+
+⚠️  CODE QUALITY ISSUES
+  [Any bugs, risks, or bad patterns found]
+
+🏁  ESTIMATED EFFORT TO COMPLETION
+  - MVP (tradeable app): [X days/weeks]
+  - Full feature parity with bsdollars.com: [X weeks]
+
+📌  RECOMMENDED NEXT STEPS
+  1. [Specific actionable task]
+  2. [Specific actionable task]
+  3. [Specific actionable task]
+  ...
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+End of Report
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

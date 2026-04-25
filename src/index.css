@@ -1,0 +1,211 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-image: url('/bg.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-color: #050505;
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(212,175,55,0.5); }
+
+  select option {
+    background: #0a0a0a;
+    color: #ffffff;
+  }
+}
+
+/* ==============================
+   LAYOUT & BACKGROUND
+   ============================== */
+@layer components {
+
+  .app-bg {
+    background-color: rgba(0, 0, 0, 0.82); /* Formal dark overlay */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  /* ==============================
+     GLASSMORPHISM CARDS
+     ============================== */
+  .glass {
+    background: rgba(15, 15, 15, 0.65);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .card {
+    @apply glass rounded-xl shadow-card;
+  }
+
+  .card-hover {
+    @apply card transition-all duration-300 cursor-pointer;
+  }
+  .card-hover:hover {
+    border-color: rgba(212,175,55,0.3);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(212,175,55,0.2);
+    transform: translateY(-2px);
+  }
+
+  .stat-card {
+    @apply card p-6 flex flex-col gap-3;
+    background: linear-gradient(135deg, rgba(25,25,25,0.7) 0%, rgba(10,10,10,0.8) 100%);
+  }
+
+  /* ==============================
+     BUTTONS
+     ============================== */
+  .btn-primary {
+    @apply font-sans font-medium px-8 py-3 rounded-none transition-all duration-300
+           flex items-center justify-center gap-2 relative overflow-hidden;
+    background: #d4af37; /* Formal Gold */
+    color: #050505;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+  }
+  .btn-primary:hover {
+    background: #e5c453;
+    box-shadow: 0 4px 20px rgba(212,175,55,0.4);
+  }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-outline {
+    @apply font-sans font-medium px-8 py-3 rounded-none transition-all duration-300
+           flex items-center justify-center gap-2;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #ffffff;
+    background: transparent;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+  }
+  .btn-outline:hover {
+    background: #ffffff;
+    color: #050505;
+    border-color: #ffffff;
+  }
+
+  .btn-danger {
+    @apply font-sans font-medium px-8 py-3 rounded-none transition-all duration-300
+           flex items-center justify-center gap-2 text-sm uppercase tracking-wider;
+    background: transparent;
+    border: 1px solid #ef4444;
+    color: #ef4444;
+  }
+  .btn-danger:hover { background: #ef4444; color: #ffffff; }
+
+  .btn-warning {
+    @apply font-sans font-medium px-4 py-2.5 rounded-none transition-all duration-300
+           flex items-center justify-center gap-2 text-sm uppercase tracking-wider;
+    background: rgba(245,158,11,0.1);
+    border: 1px solid rgba(245,158,11,0.3);
+    color: #f59e0b;
+  }
+  .btn-warning:hover { background: rgba(245,158,11,0.2); }
+
+  .btn-icon {
+    @apply w-10 h-10 rounded flex items-center justify-center transition-all duration-300;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    color: #9ca3af;
+  }
+  .btn-icon:hover {
+    background: rgba(255,255,255,0.1);
+    color: #ffffff;
+  }
+
+  /* ==============================
+     FORM ELEMENTS
+     ============================== */
+  .input-field {
+    @apply w-full rounded-none px-4 py-3 text-sm font-sans transition-all duration-300;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #ffffff;
+    outline: none;
+  }
+  .input-field::placeholder { color: #6b7280; }
+  .input-field:focus {
+    border-color: #d4af37;
+    background: rgba(0,0,0,0.6);
+  }
+
+  /* ==============================
+     BADGES & TAGS
+     ============================== */
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-mono tracking-widest uppercase;
+  }
+  .badge-gold { @apply badge; background: rgba(212,175,55,0.1); color: #d4af37; border: 1px solid rgba(212,175,55,0.3); }
+  .badge-red   { @apply badge; background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+  .badge-cyan  { @apply badge; background: rgba(59,130,246,0.1); color: #3b82f6; border: 1px solid rgba(59,130,246,0.3); }
+  .badge-purple{ @apply badge; background: rgba(99,102,241,0.1); color: #6366f1; border: 1px solid rgba(99,102,241,0.3); }
+
+  /* ==============================
+     SIDEBAR
+     ============================== */
+  .sidebar-link {
+    @apply flex items-center gap-4 px-4 py-3 text-sm font-sans font-medium transition-all duration-300 cursor-pointer relative;
+    color: #9ca3af;
+    border-left: 2px solid transparent;
+  }
+  .sidebar-link:hover { background: rgba(255,255,255,0.03); color: #ffffff; }
+  .sidebar-link.active {
+    background: linear-gradient(90deg, rgba(212,175,55,0.1) 0%, transparent 100%);
+    border-left: 2px solid #d4af37;
+    color: #ffffff;
+  }
+
+  /* ==============================
+     TICKER TAPE
+     ============================== */
+  .ticker-wrapper {
+    overflow: hidden;
+    white-space: nowrap;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    background: rgba(0,0,0,0.5);
+  }
+  .ticker-inner {
+    display: inline-flex;
+    animation: ticker 35s linear infinite;
+  }
+
+  /* ==============================
+     TABLE ROWS
+     ============================== */
+  .table-row-hover:hover {
+    background: rgba(255,255,255,0.02);
+  }
+
+  /* ==============================
+     TYPOGRAPHY
+     ============================== */
+  .heading-formal {
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: -0.02em;
+  }
+}
