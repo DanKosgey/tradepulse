@@ -32,12 +32,12 @@ export default function Sidebar() {
       {/* ── LOGO ── */}
       <div className="px-6 py-8" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 flex items-center justify-center border border-accent">
-            <Briefcase className="w-4 h-4 text-accent" />
+          <div className="w-8 h-8 flex items-center justify-center" style={{ border: '1px solid #00C880' }}>
+            <Briefcase className="w-4 h-4" style={{ color: '#00C880' }} />
           </div>
           <div>
             <span className="heading-formal font-bold text-xl text-white tracking-widest uppercase">MAICHEZ</span>
-            <span className="heading-formal font-bold text-xl text-accent tracking-widest uppercase"> TRADES</span>
+            <span className="heading-formal font-bold text-xl tracking-widest uppercase" style={{ color: '#00C880' }}> TRADES</span>
           </div>
         </div>
       </div>

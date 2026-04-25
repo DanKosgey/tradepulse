@@ -53,19 +53,51 @@ export default function Landing() {
   }
 
   return (
-    <div className="min-h-screen app-bg text-white font-sans">
+    <div className="min-h-screen text-white font-sans" style={{ position: 'relative', background: 'transparent' }}>
+
+      {/* ── ENHANCED BACKGROUND ── */}
+      {/* Background image with contrast + brightness filter */}
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundImage: 'url(/bg.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed',
+        filter: 'contrast(1.35) brightness(1.2) saturate(1.4)',
+        zIndex: -2,
+      }} />
+      {/* Vignette — darkens edges, makes centre pop */}
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.55) 80%, rgba(0,0,0,0.80) 100%)',
+        zIndex: -1,
+        pointerEvents: 'none',
+      }} />
+      {/* Minimal flat tint */}
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.10)',
+        zIndex: -1,
+        pointerEvents: 'none',
+      }} />
 
       {/* ── NAVBAR ── */}
       <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${
-        scrolled ? 'bg-black/80 backdrop-blur-md border-b border-white/5' : 'bg-transparent'
-      }`}>
+        scrolled
+          ? 'backdrop-blur-xl border-b border-accent/20'
+          : 'bg-transparent'
+      }`}
+        style={scrolled ? { background: 'rgba(2,12,7,0.88)', boxShadow: '0 4px 30px rgba(0,200,128,0.08)' } : {}}>
         <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 flex items-center justify-center border border-accent">
-              <Briefcase className="w-4 h-4 text-accent" />
+            <div className="w-8 h-8 flex items-center justify-center" style={{ border: '1px solid #00C880' }}>
+              <Briefcase className="w-4 h-4" style={{ color: '#00C880' }} />
             </div>
             <span className="heading-formal font-bold text-xl tracking-widest uppercase">
-              MAICHEZ <span className="text-accent">TRADES</span>
+              MAICHEZ <span style={{ color: '#00C880' }}>TRADES</span>
             </span>
           </div>
 
@@ -89,7 +121,9 @@ export default function Landing() {
 
           <h1 className="heading-formal font-bold text-5xl md:text-7xl leading-[1.1] mb-8 animate-slide-up">
             Precision Automation.<br />
-            <span className="text-accent">Absolute Control.</span>
+            <span className="text-accent" style={{
+              textShadow: '0 0 30px rgba(0,200,128,0.6), 0 0 60px rgba(0,200,128,0.3), 0 0 100px rgba(0,200,128,0.15)'
+            }}>Absolute Control.</span>
           </h1>
 
           <p className="text-text-muted text-lg font-body leading-relaxed mb-12 max-w-2xl mx-auto">
@@ -112,8 +146,23 @@ export default function Landing() {
       <section id="platform" className="max-w-7xl mx-auto px-6 py-24 border-t border-white/5">
         <div className="grid md:grid-cols-3 gap-8">
           {features.map((f, i) => (
-            <div key={i} className="p-8 border border-white/5 bg-surface hover:border-accent/30 transition-all duration-500">
-              <f.icon className="w-8 h-8 text-accent mb-6" />
+            <div key={i} className="p-8 border border-accent/10 transition-all duration-500 group"
+              style={{
+                background: 'linear-gradient(135deg, rgba(0,30,16,0.75) 0%, rgba(2,14,8,0.85) 100%)',
+                backdropFilter: 'blur(20px)',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = 'rgba(0,200,128,0.5)'
+                e.currentTarget.style.boxShadow = '0 0 30px rgba(0,200,128,0.12), 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(0,200,128,0.1)'
+                e.currentTarget.style.transform = 'translateY(-4px)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = 'rgba(0,200,128,0.1)'
+                e.currentTarget.style.boxShadow = 'none'
+                e.currentTarget.style.transform = 'none'
+              }}
+            >
+              <f.icon className="w-8 h-8 text-accent mb-6" style={{ filter: 'drop-shadow(0 0 8px rgba(0,200,128,0.5))' }} />
               <h3 className="heading-formal text-xl font-bold mb-3">{f.title}</h3>
               <p className="text-text-muted text-sm leading-relaxed">{f.desc}</p>
             </div>

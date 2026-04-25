@@ -108,6 +108,8 @@
     position: relative;
   }
 
+  /* Landing page uses inline rgba(0,0,0,0.18) for a brighter background */
+
   /* Dot-grid overlay for depth */
   .app-bg::before {
     content: '';
