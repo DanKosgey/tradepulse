@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { useDerivWS } from '../hooks/useDerivWS'
 import { BotEngine } from '../botEngine'
+import { parseDerivOAuthParams, saveDerivAccounts } from '../utils/authUtils'
 
 const DerivContext = createContext(null)
 
@@ -24,6 +25,22 @@ export function DerivProvider({ children }) {
     setNotification({ msg, type, id: Date.now() })
     setTimeout(() => setNotification(null), 4000)
   }, [])
+
+  // ── AUTO-PROCESS OAUTH TOKENS ON MOUNT ──
+  useEffect(() => {
+    const params = window.location.search || window.location.hash
+    if (params.includes('token1=')) {
+      const accounts = parseDerivOAuthParams(params)
+      if (accounts.length > 0) {
+        saveDerivAccounts(accounts)
+        setApiToken(accounts[0].token)
+        notify(`Logged in as ${accounts[0].loginid}`, 'success')
+        
+        // Clean URL to hide tokens
+        window.history.replaceState({}, document.title, window.location.pathname)
+      }
+    }
+  }, [notify])
 
   // Subscribe to WS messages
   useEffect(() => {

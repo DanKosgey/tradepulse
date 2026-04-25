@@ -56,7 +56,7 @@ export default function Landing() {
     <div className="min-h-screen text-white font-sans" style={{ position: 'relative', background: 'transparent' }}>
 
       {/* ── ENHANCED BACKGROUND ── */}
-      {/* Background image with contrast + brightness filter */}
+      {/* Background image with maximum contrast + brightness boost */}
       <div style={{
         position: 'fixed',
         inset: 0,
@@ -64,22 +64,22 @@ export default function Landing() {
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundAttachment: 'fixed',
-        filter: 'contrast(1.35) brightness(1.2) saturate(1.4)',
+        filter: 'contrast(1.5) brightness(1.3) saturate(1.6) sharpness(1.2)',
         zIndex: -2,
       }} />
-      {/* Vignette — darkens edges, makes centre pop */}
+      {/* Dynamic Vignette — Sharper edges to make the center content electrifying */}
       <div style={{
         position: 'fixed',
         inset: 0,
-        background: 'radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.55) 80%, rgba(0,0,0,0.80) 100%)',
+        background: 'radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0.85) 100%)',
         zIndex: -1,
         pointerEvents: 'none',
       }} />
-      {/* Minimal flat tint */}
+      {/* Near-transparent gloss tint */}
       <div style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.10)',
+        background: 'rgba(0,10,5,0.05)',
         zIndex: -1,
         pointerEvents: 'none',
       }} />
