@@ -43,7 +43,6 @@ env/
 
 # Data and Models
 *.csv
-*.json
 *.sqlite
 *.pkl
 *.joblib
