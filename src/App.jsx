@@ -1,11 +1,13 @@
 import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useDeriv } from './context/DerivContext'
-import { parseDerivOAuthHash } from './utils/authUtils'
+import { parseDerivOAuthParams } from './utils/authUtils'
 import Layout from './components/Layout'
 import Landing from './pages/Landing'
-import Dashboard from './pages/Dashboard'
-import BotBuilder from './pages/BotBuilder'
+import LoadBot from './pages/LoadBot'
+import Analytics from './pages/Analytics'
+import VisualBotBuilder from './pages/VisualBotBuilder'
+import ManualTrader from './pages/ManualTrader'
 import History from './pages/History'
 import Charts from './pages/Charts'
 import Settings from './pages/Settings'
@@ -23,20 +25,8 @@ export default function App() {
   const { notification, login } = useDeriv()
 
   useEffect(() => {
-    if (window.location.hash) {
-      const accounts = parseDerivOAuthHash(window.location.hash)
-      if (accounts.length > 0) {
-        // Log in with the first account token
-        login(accounts[0].token)
-        
-        // Optional: you could store all accounts if DerivContext supported it,
-        // but for now we just login with the first one and clear hash.
-        
-        // Clear hash from URL for security and cleanliness
-        window.history.replaceState(null, '', window.location.pathname)
-      }
-    }
-  }, [login])
+    // No-op here, handled in DerivContext
+  }, [])
 
   return (
     <div className="min-h-screen">
@@ -48,12 +38,15 @@ export default function App() {
             <Layout />
           </ProtectedRoute>
         }>
-          <Route index element={<Dashboard />} />
-          <Route path="bot" element={<BotBuilder />} />
+          <Route index element={<LoadBot />} />
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="bot" element={<VisualBotBuilder />} />
+          <Route path="manual-trader" element={<ManualTrader />} />
           <Route path="history" element={<History />} />
           <Route path="charts" element={<Charts />} />
           <Route path="settings" element={<Settings />} />
         </Route>
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>

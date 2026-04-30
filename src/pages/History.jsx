@@ -68,7 +68,7 @@ export default function History() {
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `tradepulse_history_${Date.now()}.csv`
+        a.download = `phoenix_history_${Date.now()}.csv`
         a.click()
     }
 

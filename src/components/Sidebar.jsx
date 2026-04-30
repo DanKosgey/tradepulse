@@ -2,17 +2,20 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Bot, History, LineChart,
   Settings, LogOut, Zap, Wifi, WifiOff,
-  ChevronRight, TrendingUp, Briefcase
+  ChevronRight, TrendingUp, Briefcase, Activity, MousePointerClick
 } from 'lucide-react'
 import { useDeriv } from '../context/DerivContext'
 
 const navItems = [
-  { to: '/app',          label: 'Dashboard',  icon: LayoutDashboard, end: true },
-  { to: '/app/bot',      label: 'Bot Builder', icon: Bot },
-  { to: '/app/charts',   label: 'Charts',      icon: LineChart },
-  { to: '/app/history',  label: 'History',     icon: History },
-  { to: '/app/settings', label: 'Settings',    icon: Settings },
+  { to: '/app',                 label: 'Dashboard',      icon: LayoutDashboard, end: true },
+  { to: '/app/bot',             label: 'Bot Builder',    icon: Bot },
+  { to: '/app/manual-trader',   label: 'Manual Trader',  icon: MousePointerClick },
+  { to: '/app/analytics',       label: 'Analytics',      icon: Activity },
+  { to: '/app/charts',          label: 'Charts',         icon: LineChart },
+  { to: '/app/history',         label: 'History',        icon: History },
+  { to: '/app/settings',        label: 'Settings',       icon: Settings },
 ]
+
 
 export default function Sidebar() {
   const { logout, isConnected, accountInfo, balance } = useDeriv()
@@ -36,8 +39,7 @@ export default function Sidebar() {
             <Briefcase className="w-4 h-4" style={{ color: '#00C880' }} />
           </div>
           <div>
-            <span className="heading-formal font-bold text-xl text-white tracking-widest uppercase">MAICHEZ</span>
-            <span className="heading-formal font-bold text-xl tracking-widest uppercase" style={{ color: '#00C880' }}> TRADES</span>
+            <span className="heading-formal font-bold text-xl text-white tracking-widest uppercase">Maichez Trades</span>
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 /**
- * TradePulse Bot Engine
+ * Phoenix Bot Engine
  * Handles strategy execution, contract lifecycle, risk management
  */
 
@@ -122,7 +122,7 @@ export class BotEngine {
     this.log(`Requesting proposal — ${this.config.contractType} | Stake: $${this.currentStake.toFixed(2)}`)
 
     try {
-      const proposal = await this.ws.sendProposal({
+      const proposalParams = {
         amount: this.currentStake,
         basis: 'stake',
         contract_type: this.config.contractType,
@@ -130,7 +130,18 @@ export class BotEngine {
         duration: this.config.duration,
         duration_unit: this.config.durationUnit,
         symbol: this.config.symbol,
-      })
+      }
+
+      if (this.config.prediction !== undefined && this.config.contractType.includes('DIGIT')) {
+        proposalParams.last_digit_prediction = this.config.prediction
+      }
+
+      if (this.config.barrier !== undefined && (this.config.contractType.includes('TOUCH') || this.config.contractType === 'CALL' || this.config.contractType === 'PUT')) {
+        proposalParams.barrier = this.config.barrier
+      }
+
+      const proposal = await this.ws.sendProposal(proposalParams)
+
 
       if (this.status !== BOT_STATUS.RUNNING || this.paused) return
 
@@ -144,8 +155,17 @@ export class BotEngine {
       })
     } catch (err) {
       this.log(`Proposal error: ${err.message}`, 'error')
-      // Retry after delay
-      this.timer = setTimeout(() => this._executeTrade(), 5000)
+      
+      if (this.config.restartOnError) {
+        this.log('Restarting trade cycle due to error...', 'warning')
+        this.timer = setTimeout(() => this._executeTrade(), 2000)
+      } else if (this.config.skipOnError) {
+        this.log('Skipping failed trade and scheduling next...', 'warning')
+        const delay = (this.config.intervalSeconds || 5) * 1000
+        this.timer = setTimeout(() => this._executeTrade(), delay)
+      } else {
+        this.stop(`Bot stopped due to error: ${err.message}`)
+      }
     }
   }
 
@@ -154,10 +174,20 @@ export class BotEngine {
 
     if (data.error) {
       this.log(`Buy error: ${data.error.message}`, 'error')
-      // Retry after delay
-      this.timer = setTimeout(() => this._executeTrade(), 5000)
+      
+      if (this.config.restartOnError) {
+        this.log('Retrying buy...', 'warning')
+        this.timer = setTimeout(() => this._executeTrade(), 2000)
+      } else if (this.config.skipOnError) {
+        this.log('Skipping failed buy...', 'warning')
+        const delay = (this.config.intervalSeconds || 5) * 1000
+        this.timer = setTimeout(() => this._executeTrade(), delay)
+      } else {
+        this.stop(`Bot stopped due to buy error: ${data.error.message}`)
+      }
       return
     }
+
 
     this.openContractId = data.buy.contract_id
     this.log(`Contract opened #${data.buy.contract_id} — $${data.buy.buy_price}`, 'success')

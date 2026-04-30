@@ -45,7 +45,9 @@ export function useDerivWS(appId) {
     }
 
     ws.current.onerror = (err) => {
-      console.error('[DerivWS] Error:', err)
+      // Avoid logging errors during intentional disconnection
+      if (ws.current?.readyState === WebSocket.CLOSING || ws.current?.readyState === WebSocket.CLOSED) return
+      console.error('[DerivWS] Connection Error. Verify your internet or Deriv App ID.', err)
     }
 
     ws.current.onmessage = (event) => {
@@ -81,9 +83,17 @@ export function useDerivWS(appId) {
     clearTimeout(reconnectTimer.current)
     clearInterval(pingInterval.current)
     if (ws.current) {
-      ws.current.onclose = null // prevent reconnect loops on intentional disconnect
-      ws.current.close()
-      ws.current = null
+      const socket = ws.current
+      ws.current = null // Clear ref immediately
+      
+      socket.onopen = null
+      socket.onclose = null
+      socket.onerror = null
+      socket.onmessage = null
+
+      if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
+        socket.close()
+      }
     }
   }, [])
 
@@ -170,16 +180,19 @@ export function useDerivWS(appId) {
   }, [send])
 
   const sendProposal = useCallback((params) => {
+    // Destructure known keys; spread the rest (e.g. last_digit_prediction, barrier)
+    const { amount, basis, contract_type, currency, duration, duration_unit, symbol, ...extra } = params
     return new Promise((resolve, reject) => {
       const reqId = send({
         proposal: 1,
-        amount: params.amount,
-        basis: params.basis || 'stake',
-        contract_type: params.contract_type,
-        currency: params.currency || 'USD',
-        duration: params.duration,
-        duration_unit: params.duration_unit,
-        symbol: params.symbol,
+        amount,
+        basis: basis || 'stake',
+        contract_type,
+        currency: currency || 'USD',
+        duration,
+        duration_unit,
+        symbol,
+        ...extra,
       })
 
       if (reqId === false) {

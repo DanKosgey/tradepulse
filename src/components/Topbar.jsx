@@ -51,7 +51,7 @@ function TickItem({ sym, tick }) {
 }
 
 export default function Topbar() {
-  const { ticks, ws, isAuthorized, isConnected } = useDeriv()
+  const { latestTick, ws, isAuthorized, isConnected } = useDeriv()
   const [refreshing, setRefreshing] = useState(false)
   const [time, setTime] = useState(new Date())
 
@@ -78,7 +78,7 @@ export default function Topbar() {
       {/* Live tickers */}
       <div className="flex items-center flex-1 overflow-hidden">
         {TICK_SYMBOLS.map(sym => (
-          <TickItem key={sym} sym={sym} tick={ticks[sym] ? ticks[sym][ticks[sym].length - 1] : null} />
+           <TickItem key={sym} sym={sym} tick={latestTick[sym] || null} />
         ))}
       </div>
 

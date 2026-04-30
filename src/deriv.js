@@ -1,34 +1,80 @@
-// All supported Deriv synthetic symbols
+// Comprehensive Deriv Market Symbols
 export const SYMBOLS = [
-  { value: 'R_100', label: 'Volatility 100 Index', category: 'Continuous Indices' },
-  { value: 'R_75', label: 'Volatility 75 Index', category: 'Continuous Indices' },
-  { value: 'R_50', label: 'Volatility 50 Index', category: 'Continuous Indices' },
-  { value: 'R_25', label: 'Volatility 25 Index', category: 'Continuous Indices' },
-  { value: 'R_10', label: 'Volatility 10 Index', category: 'Continuous Indices' },
-  { value: '1HZ100V', label: 'Volatility 100 (1s) Index', category: '1s Indices' },
-  { value: '1HZ75V', label: 'Volatility 75 (1s) Index', category: '1s Indices' },
-  { value: '1HZ50V', label: 'Volatility 50 (1s) Index', category: '1s Indices' },
-  { value: '1HZ25V', label: 'Volatility 25 (1s) Index', category: '1s Indices' },
-  { value: '1HZ10V', label: 'Volatility 10 (1s) Index', category: '1s Indices' },
-  { value: 'RDBULL', label: 'Bull Market Index', category: 'Daily Reset Indices' },
-  { value: 'RDBEAR', label: 'Bear Market Index', category: 'Daily Reset Indices' },
-  { value: 'JD10', label: 'Jump 10 Index', category: 'Jump Indices' },
-  { value: 'JD25', label: 'Jump 25 Index', category: 'Jump Indices' },
-  { value: 'JD50', label: 'Jump 50 Index', category: 'Jump Indices' },
-  { value: 'JD75', label: 'Jump 75 Index', category: 'Jump Indices' },
-  { value: 'JD100', label: 'Jump 100 Index', category: 'Jump Indices' },
+  // ─── DERIVED: Continuous Indices ──────────────────────────────────────────
+  { value: '1HZ10V',  label: 'Volatility 10 (1s) Index',  category: 'Continuous Indices', market: 'Derived' },
+  { value: 'R_10',    label: 'Volatility 10 Index',       category: 'Continuous Indices', market: 'Derived' },
+  { value: '1HZ25V',  label: 'Volatility 25 (1s) Index',  category: 'Continuous Indices', market: 'Derived' },
+  { value: 'R_25',    label: 'Volatility 25 Index',       category: 'Continuous Indices', market: 'Derived' },
+  { value: '1HZ50V',  label: 'Volatility 50 (1s) Index',  category: 'Continuous Indices', market: 'Derived' },
+  { value: 'R_50',    label: 'Volatility 50 Index',       category: 'Continuous Indices', market: 'Derived' },
+  { value: '1HZ75V',  label: 'Volatility 75 (1s) Index',  category: 'Continuous Indices', market: 'Derived' },
+  { value: 'R_75',    label: 'Volatility 75 Index',       category: 'Continuous Indices', market: 'Derived' },
+  { value: '1HZ100V', label: 'Volatility 100 (1s) Index', category: 'Continuous Indices', market: 'Derived' },
+  { value: 'R_100',   label: 'Volatility 100 Index',      category: 'Continuous Indices', market: 'Derived' },
+  { value: '1HZ150V', label: 'Volatility 150 (1s) Index', category: 'Continuous Indices', market: 'Derived' },
+  { value: '1HZ250V', label: 'Volatility 250 (1s) Index', category: 'Continuous Indices', market: 'Derived' },
+
+  // ─── DERIVED: Crash/Boom ──────────────────────────────────────────────────
+  { value: 'BOOM500',  label: 'Boom 500 Index',   category: 'Crash/Boom Indices', market: 'Derived' },
+  { value: 'BOOM1000', label: 'Boom 1000 Index',  category: 'Crash/Boom Indices', market: 'Derived' },
+  { value: 'CRASH500', label: 'Crash 500 Index',  category: 'Crash/Boom Indices', market: 'Derived' },
+  { value: 'CRASH1000',label: 'Crash 1000 Index', category: 'Crash/Boom Indices', market: 'Derived' },
+
+  // ─── DERIVED: Jump Indices ────────────────────────────────────────────────
+  { value: 'JD10',  label: 'Jump 10 Index',  category: 'Jump Indices', market: 'Derived' },
+  { value: 'JD25',  label: 'Jump 25 Index',  category: 'Jump Indices', market: 'Derived' },
+  { value: 'JD50',  label: 'Jump 50 Index',  category: 'Jump Indices', market: 'Derived' },
+  { value: 'JD75',  label: 'Jump 75 Index',  category: 'Jump Indices', market: 'Derived' },
+  { value: 'JD100', label: 'Jump 100 Index', category: 'Jump Indices', market: 'Derived' },
+
+  // ─── DERIVED: Step Indices ───────────────────────────────────────────────
+  { value: 'STPR', label: 'Step Index', category: 'Step Indices', market: 'Derived' },
+
+  // ─── FOREX: Major Pairs ───────────────────────────────────────────────────
+  { value: 'frxAUDJPY', label: 'AUD/JPY', category: 'Major Pairs', market: 'Forex' },
+  { value: 'frxAUDUSD', label: 'AUD/USD', category: 'Major Pairs', market: 'Forex' },
+  { value: 'frxEURAUD', label: 'EUR/AUD', category: 'Major Pairs', market: 'Forex' },
+  { value: 'frxEURCHF', label: 'EUR/CHF', category: 'Major Pairs', market: 'Forex' },
+  { value: 'frxEURGBP', label: 'EUR/GBP', category: 'Major Pairs', market: 'Forex' },
+  { value: 'frxEURJPY', label: 'EUR/JPY', category: 'Major Pairs', market: 'Forex' },
+  { value: 'frxEURUSD', label: 'EUR/USD', category: 'Major Pairs', market: 'Forex' },
+  { value: 'frxGBPAUD', label: 'GBP/AUD', category: 'Major Pairs', market: 'Forex' },
+  { value: 'frxGBPUSD', label: 'GBP/USD', category: 'Major Pairs', market: 'Forex' },
+  { value: 'frxUSDCAD', label: 'USD/CAD', category: 'Major Pairs', market: 'Forex' },
+  { value: 'frxUSDCHF', label: 'USD/CHF', category: 'Major Pairs', market: 'Forex' },
+  { value: 'frxUSDJPY', label: 'USD/JPY', category: 'Major Pairs', market: 'Forex' },
+
+  // ─── CRYPTOCURRENCIES ─────────────────────────────────────────────────────
+  { value: 'cryBTCUSD', label: 'BTC/USD', category: 'Crypto Pairs', market: 'Cryptocurrencies' },
+  { value: 'cryETHUSD', label: 'ETH/USD', category: 'Crypto Pairs', market: 'Cryptocurrencies' },
+  { value: 'cryLTCUSD', label: 'LTC/USD', category: 'Crypto Pairs', market: 'Cryptocurrencies' },
+
+  // ─── COMMODITIES ──────────────────────────────────────────────────────────
+  { value: 'gold',   label: 'Gold',   category: 'Metals', market: 'Commodities' },
+  { value: 'silver', label: 'Silver', category: 'Metals', market: 'Commodities' },
+  { value: 'oil',    label: 'Oil',    category: 'Energy', market: 'Commodities' },
 ]
 
 export const CONTRACT_TYPES = {
-  CALL: { label: 'Rise', description: 'Win if exit price is higher than entry', color: 'accent' },
-  PUT: { label: 'Fall', description: 'Win if exit price is lower than entry', color: 'danger' },
-  DIGITOVER: { label: 'Digit Over', description: 'Win if last digit of exit price is greater than your prediction', color: 'cyan' },
-  DIGITUNDER: { label: 'Digit Under', description: 'Win if last digit of exit price is less than your prediction', color: 'warning' },
-  DIGITEVEN: { label: 'Digit Even', description: 'Win if last digit of exit price is even', color: 'cyan' },
-  DIGITODD: { label: 'Digit Odd', description: 'Win if last digit of exit price is odd', color: 'warning' },
-  DIGITMATCH: { label: 'Digit Match', description: 'Win if last digit of exit price matches your prediction', color: 'accent' },
-  DIGITDIFF: { label: 'Digit Differs', description: 'Win if last digit differs from your prediction', color: 'danger' },
+  // Up/Down
+  CALL: { label: 'Rise', description: 'Win if exit price is higher than entry', color: 'accent', type: 'Up/Down' },
+  PUT: { label: 'Fall', description: 'Win if exit price is lower than entry', color: 'danger', type: 'Up/Down' },
+  CALLE: { label: 'Rise Equals', description: 'Win if exit price is higher than or equal to entry', color: 'accent', type: 'Up/Down' },
+  PUTE: { label: 'Fall Equals', description: 'Win if exit price is lower than or equal to entry', color: 'danger', type: 'Up/Down' },
+  
+  // Higher/Lower
+  ONETOUCH: { label: 'Touch', description: 'Win if market touches target', color: 'cyan', type: 'Touch/No Touch' },
+  NOTOUCH: { label: 'No Touch', description: 'Win if market does not touch target', color: 'warning', type: 'Touch/No Touch' },
+  
+  // Digits
+  DIGITOVER: { label: 'Digit Over', description: 'Win if last digit is greater than prediction', color: 'cyan', type: 'Digits' },
+  DIGITUNDER: { label: 'Digit Under', description: 'Win if last digit is less than prediction', color: 'warning', type: 'Digits' },
+  DIGITEVEN: { label: 'Digit Even', description: 'Win if last digit is even', color: 'cyan', type: 'Digits' },
+  DIGITODD: { label: 'Digit Odd', description: 'Win if last digit is odd', color: 'warning', type: 'Digits' },
+  DIGITMATCH: { label: 'Digit Match', description: 'Win if last digit matches prediction', color: 'accent', type: 'Digits' },
+  DIGITDIFF: { label: 'Digit Differs', description: 'Win if last digit differs from prediction', color: 'danger', type: 'Digits' },
 }
+
 
 export const DURATION_UNITS = [
   { value: 't', label: 'Ticks', min: 1, max: 10 },
@@ -66,14 +112,27 @@ export const STRATEGIES = [
 ]
 
 export const TV_SYMBOL_MAP = {
-  R_100: 'DERIV:VOLATILITY100',
-  R_75: 'DERIV:VOLATILITY75',
-  R_50: 'DERIV:VOLATILITY50INDEX',
-  R_25: 'DERIV:VOLATILITY25',
-  R_10: 'DERIV:VOLATILITY10INDEX',
-  '1HZ100V': 'DERIV:VOLATILITY100_1S',
-  RDBULL: 'DERIV:BULL_MARKET_INDEX',
-  RDBEAR: 'DERIV:BEAR_MARKET_INDEX',
+  R_100: 'DERIV:R_100',
+  R_75: 'DERIV:R_75',
+  R_50: 'DERIV:R_50',
+  R_25: 'DERIV:R_25',
+  R_10: 'DERIV:R_10',
+  '1HZ100V': 'DERIV:1HZ100V',
+  RDBULL: 'DERIV:RDBULL',
+  RDBEAR: 'DERIV:RDBEAR',
+  // Forex
+  frxEURUSD: 'FX:EURUSD',
+  frxGBPUSD: 'FX:GBPUSD',
+  frxUSDJPY: 'FX:USDJPY',
+  frxAUDUSD: 'FX:AUDUSD',
+  frxEURJPY: 'FX:EURJPY',
+  // Crypto
+  cryBTCUSD: 'BINANCE:BTCUSDT',
+  cryETHUSD: 'BINANCE:ETHUSDT',
+  // Commodities
+  gold: 'OANDA:XAUUSD',
+  silver: 'OANDA:XAGUSD',
+  oil: 'TVC:USOIL',
 }
 
 export function formatCurrency(amount, currency = 'USD') {

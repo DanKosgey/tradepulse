@@ -48,7 +48,7 @@ export default function Landing() {
 
   const handleDerivOAuth = () => {
     const appId = import.meta.env.VITE_DERIV_APP_ID || '1089'
-    const redirectUri = encodeURIComponent(window.location.origin + '/app')
+    const redirectUri = encodeURIComponent(window.location.origin)
     window.location.href = `https://oauth.deriv.com/oauth2/authorize?app_id=${appId}&l=en&brand=deriv&redirect_uri=${redirectUri}`
   }
 
@@ -97,7 +97,7 @@ export default function Landing() {
               <Briefcase className="w-4 h-4" style={{ color: '#00C880' }} />
             </div>
             <span className="heading-formal font-bold text-xl tracking-widest uppercase">
-              MAICHEZ <span style={{ color: '#00C880' }}>TRADES</span>
+              Maichez Trades
             </span>
           </div>
 
@@ -127,7 +127,7 @@ export default function Landing() {
           </h1>
 
           <p className="text-text-muted text-lg font-body leading-relaxed mb-12 max-w-2xl mx-auto">
-            MAICHEZ TRADES provides professional traders with a unified environment to deploy,
+            Maichez Trades provides professional traders with a unified environment to deploy,
             monitor, and optimize automated strategies across Deriv markets.
           </p>
 
@@ -217,7 +217,7 @@ export default function Landing() {
       <footer className="border-t border-white/5 py-12 text-center bg-black/50">
         <div className="flex items-center justify-center gap-2 mb-4">
           <Briefcase className="w-4 h-4 text-accent" />
-          <span className="heading-formal font-bold text-white uppercase tracking-widest">MAICHEZ TRADES</span>
+          <span className="heading-formal font-bold text-white uppercase tracking-widest">Maichez Trades</span>
         </div>
         <p className="text-text-muted text-xs tracking-wider uppercase">
           Strictly for professional use. Capital is at risk.

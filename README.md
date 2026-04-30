@@ -1,4 +1,4 @@
-# TradePulse 🚀
+# Phoenix 🚀
 
 > **Next-gen automated trading platform for Deriv** — Build, deploy, and monitor trading bots with a sleek cyberpunk UI.
 
@@ -65,7 +65,7 @@ Run: `npm run build` → deploy the `/dist` folder.
 1. Log in to [app.deriv.com](https://app.deriv.com)
 2. Go to **Account Settings → API Token**
 3. Create a token with these scopes: **Read, Trade, Payments, Admin**
-4. Paste it into TradePulse's login form or Settings page
+4. Paste it into Phoenix's login form or Settings page
 
 ---
 
@@ -128,7 +128,7 @@ src/
 
 ## ⚠️ Disclaimer
 
-> TradePulse is an **independent, third-party** tool and is **not affiliated with Deriv Ltd**.
+> Phoenix is an **independent, third-party** tool and is **not affiliated with Deriv Ltd**.
 > Automated trading involves significant financial risk. Never trade with money you cannot afford to lose.
 > Always test strategies on a **demo account** before using real funds.
 

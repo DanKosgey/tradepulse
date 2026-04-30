@@ -370,4 +370,25 @@
       rgba(0,200,128,0.4) 50%,
       transparent 100%);
   }
+
+  /* ── BOT BUILDER UTILITIES ── */
+  .card-glow {
+    @apply glass rounded-2xl overflow-hidden;
+    box-shadow: 
+      0 20px 50px rgba(0,0,0,0.6),
+      inset 0 1px 1px rgba(255,255,255,0.05);
+  }
+
+  .shadow-glow-green {
+    box-shadow: 0 0 20px rgba(0,255,135,0.25), 0 0 40px rgba(0,255,135,0.1);
+  }
+
+  .text-accent { color: #00ff87; }
+  .bg-accent { background-color: #00ff87; }
+  .text-danger { color: #ff3b5c; }
+  .bg-danger { background-color: #ff3b5c; }
+  .text-warning { color: #ffb800; }
+  .bg-warning { background-color: #ffb800; }
+  .text-cyan { color: #00d4ff; }
+  .bg-cyan { background-color: #00d4ff; }
 }

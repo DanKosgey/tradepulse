@@ -1,18 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { SYMBOLS, TV_SYMBOL_MAP } from '../deriv'
 import { useDeriv } from '../context/DerivContext'
-
-const SYMBOL_MAP = {
-  'R_100':   'VOLATILITY 100',
-  'R_50':    'VOLATILITY 50',
-  'R_25':    'VOLATILITY 25',
-  '1HZ100V': 'VOLATILITY 100 (1s)',
-}
-
-const TV_SYMBOL_MAP = {
-  'R_100': 'DERIV:VOLATILITY100',
-  'R_50':  'DERIV:VOLATILITY50INDEX',
-  'R_25':  'DERIV:VOLATILITY25',
-}
 
 const INTERVALS = [
   { label: '1m', value: '1' },
@@ -24,7 +12,7 @@ const INTERVALS = [
 ]
 
 export default function Charts() {
-  const { ticks, subscribeToSymbol } = useDeriv()
+  const { latestTick, subscribeToSymbol } = useDeriv()
   const [symbol, setSymbol] = useState('R_100')
   const [interval, setInterval] = useState('5')
   const tvRef = useRef(null)
@@ -35,55 +23,53 @@ export default function Charts() {
   }, [symbol, subscribeToSymbol])
 
   useEffect(() => {
-    if (!tvRef.current) return
-    tvRef.current.innerHTML = ''
+    const container = tvRef.current
+    if (!container) return
 
-    const script = document.createElement('script')
-    script.src = 'https://s3.tradingview.com/tv.js'
-    script.async = true
-    script.onload = () => {
-      if (window.TradingView && tvRef.current) {
-        widgetRef.current = new window.TradingView.widget({
-          container_id: 'tv_chart_container',
-          symbol: TV_SYMBOL_MAP[symbol] || 'DERIV:VOLATILITY100',
-          interval,
-          timezone: 'Etc/UTC',
-          theme: 'dark',
-          style: '1',
-          locale: 'en',
-          toolbar_bg: '#050505',
-          enable_publishing: false,
-          hide_top_toolbar: false,
-          hide_legend: false,
-          save_image: false,
-          backgroundColor: '#0a0a0a',
-          gridColor: 'rgba(255,255,255,0.05)',
-          width: '100%',
-          height: '100%',
-          studies: ['MASimple@tv-basicstudies', 'RSI@tv-basicstudies'],
-          overrides: {
-            'paneProperties.background': '#050505',
-            'paneProperties.backgroundType': 'solid',
-            'scalesProperties.textColor': '#9ca3af',
-            'scalesProperties.lineColor': 'rgba(255,255,255,0.1)',
-            'mainSeriesProperties.candleStyle.upColor': '#d4af37',
-            'mainSeriesProperties.candleStyle.downColor': '#ef4444',
-            'mainSeriesProperties.candleStyle.wickUpColor': '#d4af37',
-            'mainSeriesProperties.candleStyle.wickDownColor': '#ef4444',
-            'mainSeriesProperties.candleStyle.borderUpColor': '#d4af37',
-            'mainSeriesProperties.candleStyle.borderDownColor': '#ef4444',
-          },
+    let tvWidget = null
+
+    const initWidget = () => {
+      if (window.TradingView && container && document.getElementById('tv_chart_container')) {
+        tvWidget = new window.TradingView.widget({
+          "autosize": true,
+          "symbol": TV_SYMBOL_MAP[symbol] || "DERIV:R_100",
+          "interval": interval,
+          "timezone": "Etc/UTC",
+          "theme": "dark",
+          "style": "1",
+          "locale": "en",
+          "toolbar_bg": "rgba(5, 5, 5, 1)",
+          "enable_publishing": false,
+          "hide_top_toolbar": false,
+          "hide_legend": false,
+          "save_image": false,
+          "container_id": "tv_chart_container",
+          "backgroundColor": "rgba(5, 5, 5, 1)",
+          "gridColor": "rgba(255, 255, 255, 0.06)",
+          "studies": ["MASimple@tv-basicstudies", "RSI@tv-basicstudies"],
         })
       }
     }
 
-    if (window.TradingView) script.onload()
-    else document.head.appendChild(script)
+    if (!window.TradingView) {
+      const script = document.createElement('script')
+      script.id = 'tradingview-widget-script'
+      script.src = 'https://s3.tradingview.com/tv.js'
+      script.async = true
+      script.onload = initWidget
+      document.head.appendChild(script)
+    } else {
+      // Small timeout to ensure the DOM element with the ID is rendered
+      setTimeout(initWidget, 100)
+    }
 
-    return () => { if (widgetRef.current) try { widgetRef.current.remove?.() } catch {} }
+    return () => {
+      // Standard widget doesn't have a reliable .remove() but clearing innerHTML usually stops it
+      if (container) container.innerHTML = ''
+    }
   }, [symbol, interval])
 
-  const currentTick = ticks[symbol] ? ticks[symbol].slice(-1)[0] : null
+  const currentTick = latestTick[symbol] || null
 
   return (
     <div className="space-y-6 h-full flex flex-col pb-4">
@@ -92,20 +78,22 @@ export default function Charts() {
         <h1 className="heading-formal text-2xl font-bold uppercase tracking-widest">Market Analysis</h1>
         {currentTick && (
           <div className="flex items-center gap-3 px-4 py-1 border border-accent/30 bg-accent/5">
-            <span className="text-text-muted text-xs font-mono uppercase tracking-widest">{SYMBOL_MAP[symbol]}</span>
+            <span className="text-text-muted text-xs font-mono uppercase tracking-widest">
+              {SYMBOLS.find(s => s.value === symbol)?.label}
+            </span>
             <span className="text-accent text-lg font-mono font-bold">{currentTick.quote?.toFixed(3)}</span>
           </div>
         )}
       </div>
 
       <div className="flex items-center justify-between shrink-0 flex-wrap gap-4 border-b border-white/5 pb-4">
-        <div className="flex gap-2">
-          {Object.entries(SYMBOL_MAP).map(([val, label]) => (
-            <button key={val} onClick={() => setSymbol(val)}
-              className={`px-4 py-2 border text-xs font-mono uppercase tracking-widest transition-all duration-300 ${
-                symbol === val ? 'border-accent bg-accent/10 text-accent' : 'border-white/10 text-text-muted hover:text-white hover:border-white/30'
+        <div className="flex gap-2 flex-wrap max-w-full">
+          {SYMBOLS.filter(s => TV_SYMBOL_MAP[s.value]).map((s) => (
+            <button key={s.value} onClick={() => setSymbol(s.value)}
+              className={`px-4 py-2 border text-[10px] font-mono uppercase tracking-widest transition-all duration-300 ${
+                symbol === s.value ? 'border-accent bg-accent/10 text-accent' : 'border-white/10 text-text-muted hover:text-white hover:border-white/30'
               }`}>
-              {val.replace('1HZ', '').replace('V', '').replace('_', ' ')}
+              {s.label.split(' Index')[0].split(' Pair')[0]}
             </button>
           ))}
         </div>
