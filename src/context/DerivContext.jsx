@@ -31,6 +31,9 @@ const NOTIFICATION_DURATION_MS = 4_000
 const TOKEN_STORAGE_KEY = 'deriv_token'
 const TOKENS_MAP_STORAGE_KEY = 'deriv_tokens' // { [loginid]: token }
 
+// Symbols always streamed in the Topbar — subscribed immediately after auth
+const TOPBAR_SYMBOLS = ['R_100', 'R_50', 'R_25', '1HZ100V']
+
 // ─── Context ──────────────────────────────────────────────────────────────────
 
 const DerivContext = createContext(null)
@@ -73,7 +76,8 @@ export function DerivProvider({ children }) {
   const [notification, setNotification] = useState(null)
   const notifTimerRef = useRef(null)
 
-  const ws = useDerivWS()
+  const appId = useMemo(() => import.meta.env.VITE_DERIV_APP_ID || '1089', [])
+  const ws = useDerivWS(appId)
 
   // ─── Notification helper ────────────────────────────────────────────────────
 
@@ -94,29 +98,97 @@ export function DerivProvider({ children }) {
   // OAuth redirect, persists them, then strips the URL.
 
   useEffect(() => {
-    const rawParams = window.location.search || window.location.hash
-    if (!rawParams.includes('token1=')) return
+    const rawParams = window.location.search || window.location.hash.replace(/^#/, '?') || ''
+    const { accounts, code, state } = parseDerivOAuthParams(rawParams)
 
-    const accounts = parseDerivOAuthParams(rawParams)
-    if (accounts.length === 0) return
+    // Handle Legacy Tokens (Fallback)
+    if (accounts.length > 0) {
+      const tokenMap = accounts.reduce((acc, { loginid, token }) => {
+        acc[loginid] = token
+        return acc
+      }, {})
+      localStorage.setItem(TOKENS_MAP_STORAGE_KEY, JSON.stringify(tokenMap))
+      saveDerivAccounts(accounts)
+      const primary = accounts[0]
+      localStorage.setItem(TOKEN_STORAGE_KEY, primary.token)
+      setApiToken(primary.token)
+      notify(`Logged in as ${primary.loginid}`, 'success')
+      window.history.replaceState({}, document.title, window.location.pathname)
+      return
+    }
 
-    // Persist all account tokens so switchAccount() works later
-    const tokenMap = accounts.reduce((acc, { loginid, token }) => {
-      acc[loginid] = token
-      return acc
-    }, {})
-    localStorage.setItem(TOKENS_MAP_STORAGE_KEY, JSON.stringify(tokenMap))
+    // Handle Modern OAuth2 Code (Preferred Method)
+    if (code) {
+      const verifier = sessionStorage.getItem('pkce_code_verifier')
+      const storedState = sessionStorage.getItem('oauth_state')
 
-    saveDerivAccounts(accounts)
+      if (state !== storedState) {
+        notify('Authentication state mismatch. Possible CSRF attack.', 'error')
+        return
+      }
 
-    const primary = accounts[0]
-    localStorage.setItem(TOKEN_STORAGE_KEY, primary.token)
-    setApiToken(primary.token)
-    notify(`Logged in as ${primary.loginid}`, 'success')
+      const completeModernAuth = async () => {
+        try {
+          // 1. Exchange Code for Access Token
+          const tokenRes = await fetch('https://auth.deriv.com/oauth2/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              grant_type: 'authorization_code',
+              client_id: appId,
+              code,
+              code_verifier: verifier,
+              redirect_uri: window.location.origin + '/'
+            })
+          })
 
-    // Remove sensitive tokens from URL
-    window.history.replaceState({}, document.title, window.location.pathname)
-  }, [notify]) // eslint-disable-line react-hooks/exhaustive-deps
+          const tokenData = await tokenRes.json()
+          if (!tokenData.access_token) throw new Error(tokenData.error_description || 'Token exchange failed')
+
+          const accessToken = tokenData.access_token
+          setApiToken(accessToken)
+
+          // 2. Fetch Accounts to get Account ID
+          const accountsRes = await fetch('https://api.derivws.com/trading/v1/options/accounts', {
+            headers: { 
+              'Authorization': `Bearer ${accessToken}`,
+              'Deriv-App-ID': appId 
+            }
+          })
+          const accountsData = await accountsRes.json()
+          const primaryAccount = accountsData.data?.[0]
+          
+          if (!primaryAccount) throw new Error('No trading accounts found')
+
+          // 3. Get OTP for the primary account
+          const otpRes = await fetch(`https://api.derivws.com/trading/v1/options/accounts/${primaryAccount.account_id}/otp`, {
+            method: 'POST',
+            headers: { 
+              'Authorization': `Bearer ${accessToken}`,
+              'Deriv-App-ID': appId 
+            }
+          })
+          const otpData = await otpRes.json()
+          
+          if (otpData.data?.url) {
+            // This URL is pre-authenticated!
+            localStorage.setItem(TOKEN_STORAGE_KEY, accessToken)
+            setAccountInfo(primaryAccount)
+            // We tell the WebSocket hook to connect to this specific URL
+            ws.connect(null, otpData.data.url)
+            notify('Successfully authenticated via Modern OTP flow', 'success')
+          }
+        } catch (err) {
+          console.error('[DerivContext] Modern Auth Error:', err)
+          notify(err.message || 'Error during modern authentication', 'error')
+        } finally {
+          window.history.replaceState({}, document.title, window.location.pathname)
+        }
+      }
+
+      completeModernAuth()
+    }
+  }, [notify, appId])
 
   // ─── Auto-authorise when socket connects or token changes ───────────────────
 
@@ -133,23 +205,36 @@ export function DerivProvider({ children }) {
     }
   }, [ws.isConnected, ws.isAuthorized, apiToken]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ─── WebSocket message subscriptions ───────────────────────────────────────
-
+  // ─── Post-Authorization Initialization ─────────────────────────────────────
+  // Runs whenever the connection becomes authorized (Legacy or Modern)
   useEffect(() => {
-    // ── authorize ──
+    if (!ws.isAuthorized) return
+
+    console.log('[DerivContext] Initializing account data...')
+    
+    // 1. Core Account Data
+    ws.getBalance()
+    ws.getProfitTable(50)
+    ws.getActiveSymbols()
+
+    // 2. Real-time Ticks for the Topbar
+    TOPBAR_SYMBOLS.forEach(sym => ws.getTicks(sym))
+
+    // 3. Subscription to transactions for auto-refreshing the UI
+    ws.send({ transaction: 1, subscribe: 1 })
+
+  }, [ws.isAuthorized]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ─── WebSocket message subscriptions ───────────────────────────────────────
+  useEffect(() => {
+    // ── authorize (Legacy Handler) ──
     const unsubAuth = ws.subscribe('authorize', (data) => {
       if (data.error) {
         notify(data.error.message, 'error')
         return
       }
       setAccountInfo(data.authorize)
-      ws.getBalance()
-      ws.getProfitTable()
-      ws.getActiveSymbols()
-
-      if (window.location.pathname === '/') {
-        window.location.href = '/app'
-      }
+      notify(`Authorized as ${data.authorize.loginid}`, 'success')
     })
 
     // ── balance ──
@@ -197,6 +282,14 @@ export function DerivProvider({ children }) {
       }
     })
 
+    // ── transaction stream — refresh profit table when any trade settles ──
+    const unsubTransaction = ws.subscribe('transaction', (data) => {
+      if (!data.error && data.transaction) {
+        // Re-fetch the full profit table to get the settled trade's details
+        ws.getProfitTable(50)
+      }
+    })
+
     // ── active symbols ──
     const unsubSymbols = ws.subscribe('active_symbols', (data) => {
       if (!data.error && data.active_symbols) {
@@ -208,6 +301,7 @@ export function DerivProvider({ children }) {
       unsubAuth()
       unsubBalance()
       unsubTicks()
+      unsubTransaction()
       unsubBuy()
       unsubProfit()
       unsubSymbols()
@@ -406,6 +500,9 @@ export function DerivProvider({ children }) {
       notification,
       notify,
       subscribeToSymbol,
+      // Targeted stream cleanup (avoids breaking other pages' subscriptions)
+      forgetStream: ws.forgetStream,
+      getStreamId: ws.getStreamId,
     }),
     [
       ws,

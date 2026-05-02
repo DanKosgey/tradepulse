@@ -4,18 +4,32 @@ import {
   Tooltip, ResponsiveContainer
 } from 'recharts'
 import {
-  TrendingUp, TrendingDown, Activity, Bot, DollarSign, Target, Clock, ArrowUpRight
+  TrendingDown, Activity, ArrowUpRight
 } from 'lucide-react'
 import { useDeriv } from '../context/DerivContext'
+import { SYMBOLS } from '../deriv'
 import { format } from 'date-fns'
 
-// ─── Analytics Helpers ───────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Extract the underlying symbol from a Deriv shortcode.
+ * Shortcode format: "DIGITOVER_5T_R_100_0_5.00_0", "CALL_5T_frxEURUSD_...", etc.
+ * We search for any known symbol value as a substring (longest match first).
+ */
+function extractSymbolFromShortcode(shortcode) {
+  if (!shortcode) return null
+  // Sort descending by length so e.g. "CRASH1000" beats "CRASH"
+  const sorted = [...SYMBOLS].sort((a, b) => b.value.length - a.value.length)
+  for (const sym of sorted) {
+    if (shortcode.includes(sym.value)) return sym.value
+  }
+  return null
+}
+
 function calculateEquityCurve(profitTable) {
   if (!profitTable || profitTable.length === 0) return []
-  
-  // Sort by purchase time ascending
   const sorted = [...profitTable].sort((a, b) => (a.purchase_time || 0) - (b.purchase_time || 0))
-  
   let cumulative = 0
   return sorted.map(t => {
     const pnl = parseFloat(t.sell_price) - parseFloat(t.buy_price)
@@ -30,7 +44,7 @@ function calculateEquityCurve(profitTable) {
 
 function StatCard({ label, value, sub, color = 'accent', trend }) {
   return (
-    <div className="card p-6 border-l-2" style={{ borderLeftColor: `var(--tw-colors-${color})` }}>
+    <div className="card p-6 border-l-2" style={{ borderLeftColor: `var(--color-${color}, #00C880)` }}>
       <div className="text-text-muted text-[10px] font-mono tracking-widest uppercase mb-3">{label}</div>
       <div className="flex items-end gap-3 mb-1">
         <span className="text-white heading-formal font-bold text-3xl leading-none">{value}</span>
@@ -46,10 +60,17 @@ function StatCard({ label, value, sub, color = 'accent', trend }) {
   )
 }
 
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function Analytics() {
-  const { balance, accountInfo, profitTable, activeBots, botRunning, latestTick, subscribeToSymbol, ws } = useDeriv()
+  const {
+    balance, accountInfo, profitTable, activeBots, botRunning,
+    latestTick, subscribeToSymbol, ws, isAuthorized
+  } = useDeriv()
+
   const [openTrades, setOpenTrades] = useState({})
 
+  // ── Open contract real-time updates ──────────────────────────────────────────
   useEffect(() => {
     const unsubPoc = ws.subscribe('proposal_open_contract', (data) => {
       if (data.proposal_open_contract) {
@@ -61,24 +82,36 @@ export default function Analytics() {
         }
       }
     })
+    // Request all currently-open contracts when landing on this page
+    if (isAuthorized) {
+      ws.send({ proposal_open_contract: 1, subscribe: 1 })
+    }
     return () => unsubPoc()
-  }, [ws])
+  }, [ws, isAuthorized])
 
+  // ── Subscribe to real-time ticks for traded symbols ───────────────────────
   useEffect(() => {
-    // Subscribe to whatever we've traded
-    const traded = [...new Set(profitTable.map(t => t.shortcode?.split('_')[0]))].filter(Boolean)
-    const toSub = traded.length > 0 ? traded : ['R_100', 'R_50', 'R_10']
+    // Extract unique underlying symbols from the profit table
+    const tradedSymbols = [
+      ...new Set(profitTable.map(t => extractSymbolFromShortcode(t.shortcode)).filter(Boolean))
+    ]
+    const toSub = tradedSymbols.length > 0 ? tradedSymbols.slice(0, 6) : ['R_100', 'R_50', 'R_10']
     toSub.forEach(s => subscribeToSymbol(s))
   }, [profitTable, subscribeToSymbol])
 
+  // ── Fetch fresh profit table each time the user navigates here ───────────
+  useEffect(() => {
+    if (isAuthorized) ws.getProfitTable(50)
+  }, [isAuthorized]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Derived metrics ───────────────────────────────────────────────────────
   const equityData = calculateEquityCurve(profitTable)
-  
+
   const totalProfit = profitTable.reduce((s, t) => s + (parseFloat(t.sell_price) - parseFloat(t.buy_price)), 0)
-  const wins = profitTable.filter(t => parseFloat(t.sell_price) > parseFloat(t.buy_price)).length
+  const wins   = profitTable.filter(t => parseFloat(t.sell_price) > parseFloat(t.buy_price)).length
   const losses = profitTable.length - wins
   const winRate = profitTable.length ? ((wins / profitTable.length) * 100).toFixed(1) : 0
-  
-  // Advanced metrics
+
   const grossProfit = profitTable.reduce((s, t) => {
     const p = parseFloat(t.sell_price) - parseFloat(t.buy_price)
     return p > 0 ? s + p : s
@@ -89,16 +122,18 @@ export default function Analytics() {
   }, 0))
   const profitFactor = grossLoss > 0 ? (grossProfit / grossLoss).toFixed(2) : grossProfit > 0 ? 'MAX' : '0.00'
   const avgTrade = profitTable.length ? (totalProfit / profitTable.length).toFixed(2) : '0.00'
-  
+
   const recentTrades = [...profitTable].sort((a, b) => b.purchase_time - a.purchase_time).slice(0, 10)
 
-  // Get unique traded symbols to show live data for what the user cares about
-  const tradedSymbols = [...new Set(profitTable.map(t => t.shortcode?.split('_')[0]))].filter(Boolean).slice(0, 5)
-  const markets = (tradedSymbols.length > 0 ? tradedSymbols : ['R_100', 'R_50', 'R_10']).map(s => ({
-    symbol: s,
-    name: s.replace('R_', 'Volatility '),
-    tick: latestTick[s] || null
-  }))
+  // Build market-pulse rows from traded symbols with live prices
+  const tradedSymbols = [
+    ...new Set(profitTable.map(t => extractSymbolFromShortcode(t.shortcode)).filter(Boolean))
+  ].slice(0, 5)
+  const pulseSymbols = (tradedSymbols.length > 0 ? tradedSymbols : ['R_100', 'R_50', 'R_10'])
+  const markets = pulseSymbols.map(sym => {
+    const meta = SYMBOLS.find(s => s.value === sym)
+    return { symbol: sym, name: meta?.label ?? sym, tick: latestTick[sym] || null }
+  })
 
   return (
     <div className="space-y-6">
@@ -115,16 +150,31 @@ export default function Analytics() {
         </div>
       </div>
 
-
-      {/* ── STAT CARDS ── */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-5">
-        <StatCard label="Account Equity" value={balance ? `$${parseFloat(balance.balance).toLocaleString()}` : '—'} sub={balance?.currency || 'USD'} color="accent" />
-        <StatCard label="Total Net Profit" value={`${totalProfit >= 0 ? '+' : ''}$${totalProfit.toFixed(2)}`} color={totalProfit >= 0 ? 'accent' : 'danger'} sub="Realized" />
-        <StatCard label="Win Rate" value={`${winRate}%`} sub={`${wins}W / ${losses}L`} color="cyan" />
-        <StatCard label="Profit Factor" value={profitFactor} sub={`Avg: $${avgTrade}`} color="purple" />
+      {/* ── STATS ROW ── */}
+      <div className="responsive-grid mb-8">
+        <StatCard
+          label="Total Net Profit"
+          value={balance ? `${balance.currency} ${totalProfit.toFixed(2)}` : '—.——'}
+          sub={`from ${profitTable.length} completed trades`}
+          color={totalProfit >= 0 ? 'accent' : 'danger'}
+        />
+        <StatCard
+          label="Win Rate"
+          value={`${winRate.toFixed(1)}%`}
+          sub={`${wins} wins vs ${losses} losses`}
+          color={winRate >= 50 ? 'accent' : 'warning'}
+          trend={profitTable.length > 0 ? (totalProfit > 0 ? 12 : -5) : undefined}
+        />
+        <StatCard
+          label="Performance Factor"
+          value={profitFactor}
+          sub="Gross Profit / Gross Loss"
+          color={parseFloat(profitFactor) > 1.5 ? 'accent' : 'cyan'}
+        />
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
 
         {/* ── P&L CHART ── */}
         <div className="lg:col-span-2 card p-6">
@@ -148,28 +198,28 @@ export default function Analytics() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
                 <XAxis dataKey="date" hide={true} />
-                <YAxis 
+                <YAxis
                   orientation="right"
-                  tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 9, fontFamily: 'Space Grotesk' }} 
-                  tickLine={false} 
-                  axisLine={false} 
-                  tickFormatter={v => `$${v}`} 
+                  tick={{ fill: 'rgba(255,255,255,0.2)', fontSize: 9, fontFamily: 'Space Grotesk' }}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={v => `$${v}`}
                   width={40}
                 />
-                <Tooltip 
+                <Tooltip
                   cursor={{ stroke: 'rgba(0,255,135,0.2)', strokeWidth: 1 }}
                   contentStyle={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
                   labelStyle={{ color: '#9ca3af', fontFamily: 'Space Grotesk', fontSize: 10, marginBottom: 4 }}
-                  itemStyle={{ color: '#00ff87', fontFamily: 'Space Grotesk', fontSize: 12, fontWeight: 'bold' }} 
+                  itemStyle={{ color: '#00ff87', fontFamily: 'Space Grotesk', fontSize: 12, fontWeight: 'bold' }}
                   formatter={(val) => [`$${val}`, 'Equity P&L']}
                 />
-                <Area 
-                  type="stepAfter" 
-                  dataKey="pnl" 
-                  stroke="#00ff87" 
-                  strokeWidth={2} 
-                  fill="url(#pnlGrad)" 
-                  dot={false} 
+                <Area
+                  type="stepAfter"
+                  dataKey="pnl"
+                  stroke="#00ff87"
+                  strokeWidth={2}
+                  fill="url(#pnlGrad)"
+                  dot={false}
                   animationDuration={1000}
                 />
               </AreaChart>
@@ -182,7 +232,7 @@ export default function Analytics() {
           </ResponsiveContainer>
         </div>
 
-        {/* ── PERFORMANCE DISTRIBUTION ── */}
+        {/* ── MARKET PULSE ── */}
         <div className="card p-6 flex flex-col">
           <h2 className="heading-formal text-lg font-bold uppercase tracking-widest mb-6">Market Pulse</h2>
           <div className="flex-1 space-y-4">
@@ -193,28 +243,59 @@ export default function Analytics() {
                   <div className="text-[9px] font-mono text-white/20">{symbol}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-accent font-mono font-bold text-xs">
-                    {tick ? tick.quote.toFixed(3) : '—'}
+                  <div className={`font-mono font-bold text-xs ${tick ? 'text-accent' : 'text-white/20'}`}>
+                    {tick ? tick.quote.toFixed(3) : 'connecting…'}
                   </div>
-                  <div className="text-[9px] font-mono text-white/10 italic">Live Feed</div>
+                  <div className="text-[9px] font-mono text-white/10 italic">
+                    {tick ? format(new Date(tick.epoch * 1000), 'HH:mm:ss') : 'Live Feed'}
+                  </div>
                 </div>
               </div>
             ))}
-            {markets.length === 0 && <div className="text-white/10 text-xs font-mono py-10 text-center italic">Awaiting execution data...</div>}
+            {markets.length === 0 && (
+              <div className="text-white/10 text-xs font-mono py-10 text-center italic">Awaiting execution data...</div>
+            )}
           </div>
-          
+
           <div className="mt-6 pt-6 border-t border-white/5">
             <div className="flex items-center justify-between text-[10px] font-mono text-white/30 mb-2">
               <span>W/L DISTRIBUTION</span>
               <span>{winRate}% ACCURACY</span>
             </div>
             <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden flex">
-              <div className="h-full bg-accent" style={{ width: `${winRate}%` }} />
+              <div className="h-full bg-accent" style={{ width: `${winRate}%`, transition: 'width 0.5s ease' }} />
               <div className="h-full bg-danger/50" style={{ width: `${100 - winRate}%` }} />
             </div>
           </div>
         </div>
       </div>
+
+      {/* ── OPEN CONTRACTS ── */}
+      {Object.values(openTrades).length > 0 && (
+        <div className="card p-6">
+          <h2 className="heading-formal text-lg font-bold uppercase tracking-widest mb-4">
+            Open Contracts
+            <span className="ml-3 text-xs font-mono text-accent">{Object.values(openTrades).length} LIVE</span>
+          </h2>
+          <div className="space-y-2">
+            {Object.values(openTrades).map(c => (
+              <div key={c.contract_id} className="flex items-center justify-between p-3 border border-white/5 bg-white/[0.02]">
+                <div className="flex items-center gap-3">
+                  <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+                  <span className="text-xs font-mono text-white/60">#{c.contract_id}</span>
+                  <span className="text-xs font-sans text-white">{c.underlying}</span>
+                </div>
+                <div className="flex items-center gap-4 text-xs font-mono">
+                  <span className="text-white/40">Stake: ${parseFloat(c.buy_price || 0).toFixed(2)}</span>
+                  <span className={parseFloat(c.profit || 0) >= 0 ? 'text-accent' : 'text-danger'}>
+                    P&L: {parseFloat(c.profit || 0) >= 0 ? '+' : ''}${parseFloat(c.profit || 0).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── RECENT TRADES ── */}
       <div className="card p-6">
@@ -227,7 +308,7 @@ export default function Analytics() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/10">
-                  {['Reference', 'Asset', 'Stake', 'Payout', 'Net Return', 'Execution Time'].map(h => (
+                  {['Reference', 'Asset', 'Contract', 'Stake', 'Payout', 'Net Return', 'Time'].map(h => (
                     <th key={h} className="text-left text-text-muted text-[10px] font-mono pb-3 uppercase tracking-wider font-normal">{h}</th>
                   ))}
                 </tr>
@@ -235,10 +316,13 @@ export default function Analytics() {
               <tbody>
                 {recentTrades.map(t => {
                   const pnl = parseFloat(t.sell_price) - parseFloat(t.buy_price)
+                  const sym = extractSymbolFromShortcode(t.shortcode)
+                  const contractType = t.shortcode?.split('_')[0] || '—'
                   return (
                     <tr key={t.transaction_id} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
                       <td className="py-4 pr-5 text-text-muted text-xs font-mono">{String(t.transaction_id).slice(-8)}</td>
-                      <td className="py-4 pr-5 text-white text-xs font-sans font-medium">{t.shortcode?.split('_')[0] || '—'}</td>
+                      <td className="py-4 pr-5 text-white text-xs font-sans font-medium">{sym || '—'}</td>
+                      <td className="py-4 pr-5 text-white/40 text-xs font-mono">{contractType}</td>
                       <td className="py-4 pr-5 text-white text-xs font-mono">${parseFloat(t.buy_price).toFixed(2)}</td>
                       <td className="py-4 pr-5 text-white text-xs font-mono">${parseFloat(t.sell_price).toFixed(2)}</td>
                       <td className="py-4 pr-5">

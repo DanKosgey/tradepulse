@@ -75,18 +75,20 @@ export default function Topbar() {
         boxShadow: '0 4px 30px rgba(0,200,128,0.06), inset 0 -1px 0 rgba(0,200,128,0.08)',
       }}>
 
-      {/* Live tickers */}
-      <div className="flex items-center flex-1 overflow-hidden">
-        {TICK_SYMBOLS.map(sym => (
-           <TickItem key={sym} sym={sym} tick={latestTick[sym] || null} />
-        ))}
+      {/* Live tickers - Hidden on mobile */}
+      <div className="flex-1 overflow-hidden hidden md:block">
+        <div className="flex items-center">
+          {TICK_SYMBOLS.map(sym => (
+             <TickItem key={sym} sym={sym} tick={latestTick[sym] || null} />
+          ))}
+        </div>
       </div>
 
       {/* Right section */}
-      <div className="flex items-center gap-4 shrink-0">
+      <div className="flex items-center gap-3 sm:gap-4 shrink-0">
         
-        {/* Time */}
-        <div className="text-right hidden sm:block">
+        {/* Time - Hidden on mobile */}
+        <div className="text-right hidden md:block">
           <div className="text-white text-sm font-mono tracking-wider">{time.toLocaleTimeString()}</div>
           <div className="text-text-muted text-[9px] font-mono uppercase tracking-widest">{time.toLocaleDateString()}</div>
         </div>

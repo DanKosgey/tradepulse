@@ -3,6 +3,9 @@ import { TrendingUp, TrendingDown, ChevronDown, Star, Search, RefreshCw, Activit
 import { useDeriv } from '../context/DerivContext'
 import { SYMBOLS } from '../deriv'
 
+// Stream IDs for this page's Deriv subscriptions (used for targeted cleanup)
+const STREAM_IDS = { tick: null, history: null }
+
 // ─── Canvas chart: draws directly to GPU — zero React re-renders, zero blink ──
 const CanvasChart = memo(function CanvasChart({ tickBuf }) {
   const canvasRef = useRef(null)
@@ -196,14 +199,14 @@ const MarketPanel = memo(({ symbol, onSelect, onClose }) => {
   const syms = getSyms(cat).filter(s => s.label.toLowerCase().includes(q.toLowerCase()))
 
   return (
-    <div className="absolute top-16 left-0 z-50 w-[560px] rounded-2xl border border-white/10 shadow-2xl overflow-hidden" style={{ background: '#0e1120' }}>
+    <div className="absolute top-16 left-0 z-50 w-[560px] max-w-[calc(100vw-2rem)] rounded-2xl border border-white/10 shadow-2xl overflow-hidden" style={{ background: '#0e1120' }}>
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
         <span className="font-semibold text-white text-sm">Markets</span>
         <button onClick={onClose}><X className="w-4 h-4 text-white/30 hover:text-white" /></button>
       </div>
-      <div className="flex" style={{ height: 380 }}>
+      <div className="flex flex-col sm:flex-row" style={{ height: 380 }}>
         {/* Market list */}
-        <div className="w-36 border-r border-white/5 overflow-y-auto py-1">
+        <div className="sm:w-36 flex sm:flex-col overflow-x-auto sm:overflow-y-auto border-b sm:border-b-0 sm:border-r border-white/5 py-1 shrink-0">
           {MARKETS.map(m => (
             <button key={m} onClick={() => { setMkt(m); setCat(getCats(m)[0]) }}
               className={`w-full text-left px-4 py-2 text-xs transition-all
@@ -254,7 +257,11 @@ const MarketPanel = memo(({ symbol, onSelect, onClose }) => {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function ManualTrader() {
-  const { isAuthorized, ws, balance, notify } = useDeriv()
+  const { isAuthorized, ws, balance, notify, forgetStream, getStreamId } = useDeriv()
+
+  // Refs to track our own Deriv stream IDs so we only forget our own streams
+  const tickStreamId   = useRef(null)
+  const histStreamId   = useRef(null)
 
   // Symbol
   const [symbol, setSymbol]       = useState(DEFAULT_SYM)
@@ -310,9 +317,14 @@ export default function ManualTrader() {
     setLastDigit(null)
     setDigitTape([])
 
-    // History subscription
+    // History subscription — capture stream ID for targeted cleanup
+    const histReqId = ws.send({ ticks_history: symbol.value, count: 60, end: 'latest', style: 'ticks', subscribe: 1 })
     const unsubHist = ws.subscribe('history', msg => {
       if (msg.error || !msg.history) return
+      // Capture the stream ID from the first response
+      if (msg.subscription?.id && msg.req_id === histReqId) {
+        histStreamId.current = msg.subscription.id
+      }
       const { prices = [], times = [] } = msg.history
       const formatted = prices.map((p, i) => ({
         time: new Date(times[i] * 1000).toLocaleTimeString(),
@@ -323,10 +335,15 @@ export default function ManualTrader() {
       if (formatted.length) setOpenPrice(formatted[0].price)
     })
 
-    // Live tick subscription
+    // Live tick subscription — filter to our symbol; capture stream ID
+    const tickReqId = ws.send({ ticks: symbol.value, subscribe: 1 })
     const unsubTick = ws.subscribe('tick', msg => {
       if (msg.error || !msg.tick) return
       if (msg.tick.symbol !== symbol.value) return
+      // Capture stream ID from first matching response
+      if (msg.subscription?.id && msg.req_id === tickReqId) {
+        tickStreamId.current = msg.subscription.id
+      }
       const price = parseFloat(msg.tick.quote)
       const entry = {
         time: new Date(msg.tick.epoch * 1000).toLocaleTimeString(),
@@ -336,15 +353,14 @@ export default function ManualTrader() {
       tickBuf.current = [...tickBuf.current, entry].slice(-60)
     })
 
-    ws.send({ ticks_history: symbol.value, count: 60, end: 'latest', style: 'ticks', subscribe: 1 })
-    ws.send({ ticks: symbol.value, subscribe: 1 })
-
     return () => {
       unsubHist()
       unsubTick()
-      ws.send({ forget_all: 'ticks' })
+      // Forget ONLY our own streams — not all ticks globally
+      if (tickStreamId.current) { forgetStream(tickStreamId.current); tickStreamId.current = null }
+      if (histStreamId.current) { forgetStream(histStreamId.current); histStreamId.current = null }
     }
-  }, [symbol.value, ws])
+  }, [symbol.value, ws, forgetStream])
 
   // ── Proposal fetch ────────────────────────────────────────────────────────────
   const currentPanel = TRADE_PANELS.find(p => p.id === panel)
@@ -410,10 +426,10 @@ export default function ManualTrader() {
   }
 
   return (
-    <div className="flex overflow-hidden" style={{ height: 'calc(100vh - 64px)', background: '#07080f' }}>
+    <div className="flex flex-col lg:flex-row overflow-hidden" style={{ height: 'calc(100vh - 64px)', background: '#07080f' }}>
 
       {/* ── LEFT: Chart ──────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0 min-h-[300px] lg:min-h-0">
         {/* Symbol selector */}
         <div className="relative px-4 pt-4 pb-2 shrink-0">
           <button onClick={() => setShowMkt(v => !v)}
@@ -468,7 +484,7 @@ export default function ManualTrader() {
       </div>
 
       {/* ── RIGHT: Trade panel ───────────────────────────────────────────────── */}
-      <div className="w-72 shrink-0 flex flex-col border-l border-white/5 overflow-y-auto"
+      <div className="w-full lg:w-72 shrink-0 flex flex-col border-t lg:border-t-0 lg:border-l border-white/5 overflow-y-auto"
         style={{ background: '#0a0c18' }}>
         <div className="p-4 space-y-5">
 

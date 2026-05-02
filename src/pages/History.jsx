@@ -21,11 +21,24 @@ export default function History() {
         if (isAuthorized) {
             ws.getProfitTable(50)
         }
-        setTimeout(() => setLoading(false), 1000)
+        setTimeout(() => setLoading(false), 1200)
     }
 
+    // Fetch on mount / when auth state changes
     useEffect(() => {
         if (isAuthorized) ws.getProfitTable(50)
+    }, [isAuthorized, ws])
+
+    // Subscribe to transaction notifications so the table auto-updates
+    // when a bot or manual trade settles while the user is on this page
+    useEffect(() => {
+        if (!isAuthorized) return
+        const unsub = ws.subscribe('transaction', () => {
+            // A new trade settled — refresh the profit table
+            ws.getProfitTable(50)
+        })
+        ws.send({ transaction: 1, subscribe: 1 })
+        return () => unsub()
     }, [isAuthorized, ws])
 
     const trades = profitTable.map(t => ({

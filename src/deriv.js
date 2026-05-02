@@ -111,29 +111,91 @@ export const STRATEGIES = [
   },
 ]
 
+/**
+ * Maps Deriv symbol values → TradingView symbol strings.
+ *
+ * Deriv-native synthetic indices (volatility, crash/boom, jump, step)
+ * are available under the "DERIV:" exchange prefix in TradingView.
+ *
+ * Standard market symbols (forex, crypto, commodities) use their
+ * respective exchange prefixes.
+ */
 export const TV_SYMBOL_MAP = {
-  R_100: 'DERIV:R_100',
-  R_75: 'DERIV:R_75',
-  R_50: 'DERIV:R_50',
-  R_25: 'DERIV:R_25',
-  R_10: 'DERIV:R_10',
+  // ── Continuous Volatility Indices (Regular) ─────────────────────────────────
+  R_10:      'DERIV:R_10',
+  R_25:      'DERIV:R_25',
+  R_50:      'DERIV:R_50',
+  R_75:      'DERIV:R_75',
+  R_100:     'DERIV:R_100',
+
+  // ── Continuous Volatility Indices (1-second) ─────────────────────────────────
+  '1HZ10V':  'DERIV:1HZ10V',
+  '1HZ25V':  'DERIV:1HZ25V',
+  '1HZ50V':  'DERIV:1HZ50V',
+  '1HZ75V':  'DERIV:1HZ75V',
   '1HZ100V': 'DERIV:1HZ100V',
+  '1HZ150V': 'DERIV:1HZ150V',
+  '1HZ250V': 'DERIV:1HZ250V',
+
+  // ── Crash / Boom Indices ──────────────────────────────────────────────────────
+  BOOM300:   'DERIV:BOOM300',
+  BOOM500:   'DERIV:BOOM500',
+  BOOM1000:  'DERIV:BOOM1000',
+  CRASH300:  'DERIV:CRASH300',
+  CRASH500:  'DERIV:CRASH500',
+  CRASH1000: 'DERIV:CRASH1000',
+
+  // ── Jump Indices ──────────────────────────────────────────────────────────────
+  JD10:  'DERIV:JD10',
+  JD25:  'DERIV:JD25',
+  JD50:  'DERIV:JD50',
+  JD75:  'DERIV:JD75',
+  JD100: 'DERIV:JD100',
+
+  // ── Step Index ────────────────────────────────────────────────────────────────
+  STPR: 'DERIV:STPR',
+
+  // ── Range Break Indices ───────────────────────────────────────────────────────
   RDBULL: 'DERIV:RDBULL',
   RDBEAR: 'DERIV:RDBEAR',
-  // Forex
-  frxEURUSD: 'FX:EURUSD',
-  frxGBPUSD: 'FX:GBPUSD',
-  frxUSDJPY: 'FX:USDJPY',
+
+  // ── Forex Major Pairs ─────────────────────────────────────────────────────────
+  frxAUDJPY: 'FX:AUDJPY',
   frxAUDUSD: 'FX:AUDUSD',
+  frxEURAUD: 'FX:EURAUD',
+  frxEURCHF: 'FX:EURCHF',
+  frxEURGBP: 'FX:EURGBP',
   frxEURJPY: 'FX:EURJPY',
-  // Crypto
+  frxEURUSD: 'FX:EURUSD',
+  frxGBPAUD: 'FX:GBPAUD',
+  frxGBPUSD: 'FX:GBPUSD',
+  frxUSDCAD: 'FX:USDCAD',
+  frxUSDCHF: 'FX:USDCHF',
+  frxUSDJPY: 'FX:USDJPY',
+
+  // ── Cryptocurrencies ──────────────────────────────────────────────────────────
   cryBTCUSD: 'BINANCE:BTCUSDT',
   cryETHUSD: 'BINANCE:ETHUSDT',
-  // Commodities
-  gold: 'OANDA:XAUUSD',
+  cryLTCUSD: 'BINANCE:LTCUSDT',
+
+  // ── Commodities ───────────────────────────────────────────────────────────────
+  gold:   'OANDA:XAUUSD',
   silver: 'OANDA:XAGUSD',
-  oil: 'TVC:USOIL',
+  oil:    'TVC:USOIL',
 }
+
+/**
+ * Set of Deriv-native symbols whose chart data comes from Deriv's own
+ * ticks_history WebSocket API (not TradingView's data feeds).
+ * Used by Charts.jsx to pick the correct renderer.
+ */
+export const DERIV_NATIVE_SYMBOLS = new Set([
+  'R_10','R_25','R_50','R_75','R_100',
+  '1HZ10V','1HZ25V','1HZ50V','1HZ75V','1HZ100V','1HZ150V','1HZ250V',
+  'BOOM300','BOOM500','BOOM1000','CRASH300','CRASH500','CRASH1000',
+  'JD10','JD25','JD50','JD75','JD100',
+  'STPR','RDBULL','RDBEAR',
+])
 
 export function formatCurrency(amount, currency = 'USD') {
   const num = parseFloat(amount)
