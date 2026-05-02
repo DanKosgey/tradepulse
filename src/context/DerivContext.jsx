@@ -242,7 +242,7 @@ export function DerivProvider({ children }) {
       if (!data.error) setBalance(data.balance)
     })
 
-    // ── tick stream ──
+    // ── tick stream & history ──
     const unsubTicks = ws.subscribe('tick', (data) => {
       if (data.error || !data.tick) return
       const { symbol } = data.tick
@@ -254,6 +254,26 @@ export function DerivProvider({ children }) {
       })
 
       setLatestTick((prev) => ({ ...prev, [symbol]: data.tick }))
+    })
+
+    const unsubHistory = ws.subscribe('history', (data) => {
+      if (data.error || !data.history) return
+      const { symbol } = data.echo_req
+      const { prices, times } = data.history
+      const ticks = prices.map((p, i) => ({
+        symbol,
+        quote: p,
+        epoch: times[i],
+      }))
+
+      setTickHistory((prev) => ({
+        ...prev,
+        [symbol]: ticks.slice(-TICK_HISTORY_LIMIT),
+      }))
+
+      if (ticks.length > 0) {
+        setLatestTick((prev) => ({ ...prev, [symbol]: ticks[ticks.length - 1] }))
+      }
     })
 
     // ── buy / contract open ──
@@ -301,6 +321,7 @@ export function DerivProvider({ children }) {
       unsubAuth()
       unsubBalance()
       unsubTicks()
+      unsubHistory()
       unsubTransaction()
       unsubBuy()
       unsubProfit()

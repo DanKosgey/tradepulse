@@ -318,7 +318,7 @@ export default function Charts() {
   const { latestTick, tickHistory, ws, forgetStream, isAuthorized } = useDeriv()
 
   const [symbol,   setSymbol]   = useState('R_100')
-  const [interval, setInterval] = useState(INTERVALS[2]) // 5m default
+  const [interval, setInterval] = useState(INTERVALS[0]) // Ticks (1 tick) default
 
   // Deriv candle data fetched via ticks_history
   const [candles,  setCandles]  = useState([])
@@ -330,15 +330,23 @@ export default function Charts() {
   const isNative = DERIV_NATIVE_SYMBOLS.has(symbol)
   const tvSymbol = TV_SYMBOL_MAP[symbol] || `DERIV:${symbol}`
 
-  // ── Subscribe to live ticks for the price badge ──────────────────────────────
+  // ── Subscribe to live ticks for the price badge & history ────────────────────
   useEffect(() => {
     if (tickStreamId.current) { forgetStream(tickStreamId.current); tickStreamId.current = null }
-    const reqId = ws.send({ ticks: symbol, subscribe: 1 })
-    const unsub = ws.subscribe('tick', msg => {
-      if (msg.error || !msg.tick || msg.tick.symbol !== symbol) return
+    
+    // Use getTickHistory to get initial 200 ticks + subscribe for real-time updates
+    const reqId = ws.getTickHistory(symbol, 200)
+    
+    // We still need to listen for the subscription ID to clean up later
+    const unsub = ws.subscribe('history', msg => {
+      if (msg.error || !msg.history || msg.echo_req.ticks_history !== symbol) return
       if (msg.subscription?.id && msg.req_id === reqId) tickStreamId.current = msg.subscription.id
     })
-    return () => { unsub(); if (tickStreamId.current) { forgetStream(tickStreamId.current); tickStreamId.current = null } }
+
+    return () => { 
+      unsub(); 
+      if (tickStreamId.current) { forgetStream(tickStreamId.current); tickStreamId.current = null } 
+    }
   }, [symbol, ws, forgetStream])
 
   // ── Fetch Deriv candle history for native symbols ────────────────────────────

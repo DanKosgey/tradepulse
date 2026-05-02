@@ -288,7 +288,7 @@ export default function ManualTrader() {
 
   const currency = balance?.currency ?? 'USD'
 
-  // ── Tick flush timer: update chart state every 400 ms ───────────────────────
+  // ── Tick flush timer: update chart state every 100 ms ───────────────────────
   useEffect(() => {
     const id = setInterval(() => {
       const buf = tickBuf.current
@@ -304,7 +304,7 @@ export default function ManualTrader() {
       buf.forEach(t => counts[t.ld]++)
       const total = buf.length
       setDigitDist(counts.map(c => (c / total) * 100))
-    }, 400)
+    }, 100)
     return () => clearInterval(id)
   }, [])
 
@@ -318,9 +318,9 @@ export default function ManualTrader() {
     setDigitTape([])
 
     // History subscription — capture stream ID for targeted cleanup
-    const histReqId = ws.send({ ticks_history: symbol.value, count: 60, end: 'latest', style: 'ticks', subscribe: 1 })
+    const histReqId = ws.getTickHistory(symbol.value, 200)
     const unsubHist = ws.subscribe('history', msg => {
-      if (msg.error || !msg.history) return
+      if (msg.error || !msg.history || msg.echo_req.ticks_history !== symbol.value) return
       // Capture the stream ID from the first response
       if (msg.subscription?.id && msg.req_id === histReqId) {
         histStreamId.current = msg.subscription.id
@@ -331,12 +331,12 @@ export default function ManualTrader() {
         price: parseFloat(p),
         ld: Math.floor(parseFloat(p) % 10),
       }))
-      tickBuf.current = formatted.slice(-60)
+      tickBuf.current = formatted.slice(-200)
       if (formatted.length) setOpenPrice(formatted[0].price)
     })
 
     // Live tick subscription — filter to our symbol; capture stream ID
-    const tickReqId = ws.send({ ticks: symbol.value, subscribe: 1 })
+    const tickReqId = ws.getTicks(symbol.value)
     const unsubTick = ws.subscribe('tick', msg => {
       if (msg.error || !msg.tick) return
       if (msg.tick.symbol !== symbol.value) return
@@ -350,7 +350,7 @@ export default function ManualTrader() {
         price,
         ld: Math.floor(price % 10),
       }
-      tickBuf.current = [...tickBuf.current, entry].slice(-60)
+      tickBuf.current = [...tickBuf.current, entry].slice(-200)
     })
 
     return () => {
